@@ -43,6 +43,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
 
+      - name: Install system dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libclang-dev
+
       - name: Build workspace
         run: cargo build --workspace --verbose
 
@@ -96,7 +102,7 @@ jobs:
         if: matrix.target == 'aarch64-unknown-linux-gnu'
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu
+          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu libclang-dev
 
       - name: Configure cross-compilation
         if: matrix.target == 'aarch64-unknown-linux-gnu'
@@ -115,6 +121,11 @@ jobs:
           key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build for target
+        env:
+          CC_aarch64_unknown_linux_gnu: aarch64-linux-gnu-gcc
+          CXX_aarch64_unknown_linux_gnu: aarch64-linux-gnu-g++
+          AR_aarch64_unknown_linux_gnu: aarch64-linux-gnu-ar
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
         run: |
           echo "Building for target: ${{ matrix.target }}"
           cargo build --target ${{ matrix.target }} --verbose
@@ -144,7 +155,7 @@ jobs:
       - name: Install benchmark dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y curl aria2 time
+          sudo apt-get install -y curl aria2 time libclang-dev
 
       - name: Verify benchmark script exists
         run: |
